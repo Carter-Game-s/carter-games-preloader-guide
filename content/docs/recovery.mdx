@@ -1,0 +1,44 @@
+---
+title: Backups, rollback, and recovery
+description: Recover accepted state without turning cache failures into a full outage.
+---
+
+## Decide what must be backed up
+
+The trusted source can often reproduce game assets, but accepted catalog state, configuration, and deployment metadata may be essential to recovery. Store secrets separately with access appropriate to those credentials.
+
+Cache backups can reduce restoration time when assets are large or the source is unavailable. They do not remove the need to verify restored bytes.
+
+## Restore in stages
+
+1. Restore the application release and compatible runtime.
+2. Recreate the service account and directory permissions.
+3. Restore protected configuration without exposing it in logs.
+4. Restore the last accepted catalog and optional cache.
+5. Verify cached versions before making them ready.
+6. Start listeners and test authenticated delivery.
+7. Resume discovery against the trusted source.
+
+Keep automatic discovery paused during a deliberate forensic check if necessary. Cached delivery and discovery should remain independently controllable.
+
+## Handle interrupted writes
+
+On startup, identify incomplete temporary files and discard them according to a safe retention policy. Do not infer a complete asset from a filename alone. Recover state from an atomic valid snapshot and verify any versions that were in progress.
+
+Do not delete an entire data directory just because one file is corrupt.
+
+## Roll back application code
+
+Retain a previous built release. Before switching back, confirm it can read the current state schema. An application rollback and a catalog rollback are separate operations; document both.
+
+Avoid destructive migrations without a compatible backup and tested restoration procedure.
+
+## Rotate after credential exposure
+
+Revoke exposed tokens or keys, replace them in the consuming service, and verify delivery or discovery. Removing a secret from the latest commit does not remove it from Git history, caches, or logs.
+
+Review what the credential could access and keep the recovery record free of the credential itself.
+
+## Practice recovery
+
+Use an isolated fixture service to rehearse restoring a catalog, repairing a corrupt cache, and losing the source temporarily. Measure recovery time. A backup is useful only if you can restore it with the permissions and runtime you actually deploy.

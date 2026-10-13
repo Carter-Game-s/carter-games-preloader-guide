@@ -1,0 +1,50 @@
+---
+title: Catalog contract and versioning
+description: Define stable identifiers, immutable sources, and validation rules.
+---
+
+## An illustrative contract
+
+This is a suggested schema for your implementation, not a production manifest accepted by Carter's private service:
+
+```json
+{
+  "schemaVersion": 1,
+  "revision": "IMMUTABLE_SOURCE_COMMIT",
+  "entries": [
+    {
+      "slug": "original-demo",
+      "title": "Original Demo",
+      "path": "games/original-demo/index.html",
+      "blob": "GIT_BLOB_ID",
+      "size": 1024
+    }
+  ]
+}
+```
+
+Replace the symbolic revision and hash with validated object IDs. Derive the byte length from the exact source bytes, not from compressed output or a browser's decoded text.
+
+## Stable slug, changing version
+
+Use the slug to identify the game and the content ID to identify one version. A title change should not require a new slug. Updated bytes must receive a new content ID. Never overwrite a version while retaining its old identifier.
+
+Validate slugs against a narrow format, such as lowercase letters, numbers, and single hyphens. Reject empty values, separators, dot segments, ambiguous encodings, and duplicate slugs.
+
+## Validate paths before network access
+
+Require relative paths under an approved directory. Reject absolute paths, backslashes where inappropriate, control characters, query strings, fragments, and decoded traversal. Normalize once, then ensure the result still lies under the allowed source prefix.
+
+Do not construct an arbitrary URL directly from a catalog field. The configured repository and immutable commit determine the origin; the entry supplies only a validated path.
+
+## Bound the catalog
+
+Limit serialized catalog bytes, entry count, title length, per-file size, and total advertised size. A trusted repository can still receive an accidental oversized publication. Validate numeric fields as finite safe integers with explicit minimums and maximums.
+
+Choose whether unknown fields are rejected or ignored as part of schema versioning. Prefer rejection for security-sensitive fields so a misspelled option cannot silently change behavior.
+
+## Migrations and removals
+
+Increment the schema version for incompatible changes. Deploy readers that support the new schema before publishing it. Keep the previous accepted snapshot until the migration succeeds.
+
+Removing a game from discovery should hide it from new selection, but does not automatically make old bytes safe to delete. Decide retention separately based on active portal revisions and storage policy.

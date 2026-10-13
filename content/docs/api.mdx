@@ -1,0 +1,51 @@
+---
+title: Asset delivery and portal integration
+description: Define an authenticated contract and preserve browser-compatible responses.
+---
+
+## A proposed endpoint
+
+An implementation could expose:
+
+```text
+GET /assets/<validated-slug>/<known-content-id>
+Authorization: Bearer <service-token>
+```
+
+This is a design example, not an endpoint hosted by the documentation site. Keep tokens on the portal server. The browser should access your portal's controlled player route rather than receive the service credential.
+
+## Response behavior
+
+| Situation | Suggested status | Browser behavior |
+| --- | --- | --- |
+| Verified version available | 200 | Render the game |
+| Download or verification pending | 503 plus Retry-After | Show preparing state |
+| Unknown slug/version | 404 | Show unavailable state |
+| Invalid credentials | 401 | Server-side integration error |
+| Method unsupported | 405 plus Allow | Do not retry as a download |
+
+Authenticate before looking up sensitive file information. Do not allow a query parameter to choose an arbitrary upstream URL or filesystem path.
+
+## Content headers
+
+Use the correct MIME type for HTML, JavaScript, CSS, JSON, images, and WebAssembly. Set `Content-Encoding: gzip` only when delivering gzip bytes. Never label decompressed bytes as compressed.
+
+For a playable HTML route, use `text/html` and omit attachment disposition. A wrong content type can produce a blank page, blocked scripts, or a download prompt.
+
+## Immutable cache policy
+
+Long-lived immutable caching is appropriate only when the URL identifies bytes that will never change. A latest-version route needs a shorter policy or an explicit redirect to the pinned version.
+
+Consider whether a private authenticated response may be stored by shared intermediaries. Do not blindly mark protected asset responses public.
+
+## Portal verification
+
+Check the returned version, length, and hash before embedding content. Treat a mismatch as an integration failure even when the response was 200. Show a readable error and leave other games accessible.
+
+Separate portal API errors from player runtime errors. A cached HTML shell can load successfully while a referenced WebAssembly file fails.
+
+## Multi-file games
+
+Choose whether your package is self-contained or includes a validated asset map. Relative paths, a document base URL, dynamic imports, fetch calls, and media URLs must resolve consistently. Testing only the first HTML response is insufficient.
+
+Do not promise universal compatibility: games depending on external authentication, browser-specific APIs, or unavailable services need separate handling and testing.

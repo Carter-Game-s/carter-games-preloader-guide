@@ -1,0 +1,57 @@
+---
+title: System architecture
+description: Trace publication through discovery, verified storage, and browser playback.
+---
+
+## Components and ownership
+
+| Component | Responsibility | May execute game code? |
+| --- | --- | --- |
+| Publisher | Produce assets and catalog in one revision | Only in an isolated test browser |
+| Synchronizer | Discover and validate source revisions | No |
+| Download worker | Fetch bounded bytes from approved sources | No |
+| Cache | Store verified immutable versions | No |
+| Asset API | Authenticate and deliver known versions | No |
+| Portal server | Select a game and access the asset API | No |
+| Browser player | Run the selected game in isolation | Yes |
+| Admin service | Authenticate operators and schedule work | No |
+
+A game is content to the server, not a server-side plugin. Do not evaluate HTML, JavaScript, or WebAssembly while caching it.
+
+## Follow one publication
+
+```text
+Publisher commits assets + catalog
+              |
+Synchronizer resolves an immutable revision
+              |
+Catalog validator accepts the complete candidate
+              |
+Bounded workers fetch missing versions
+              |
+Original bytes pass hash + size verification
+              |
+Atomic cache installation publishes readiness
+              |
+Authenticated API -> portal -> isolated browser player
+```
+
+Resolving the branch once is essential. If the catalog comes from one commit and its files come from a later branch tip, the service can combine incompatible versions.
+
+## Separate desired state from ready state
+
+The accepted catalog describes desired content. A readiness index describes which pinned versions have verified bytes. Download progress describes current work. Treat these as separate records: knowing a game exists does not mean it is ready to serve.
+
+Keep a last-known-good catalog available while a candidate is being validated. A synchronization failure must not erase an already working library.
+
+## Failure boundaries
+
+Source failures belong to discovery or downloading. Disk failures belong to cache installation. Unauthorized requests belong to the API. Browser rendering errors belong to the player. Track each separately so a failed game launch does not get misreported as a cache outage.
+
+Use operation IDs to connect a sync request, queued downloads, verification results, and admin events. Keep these IDs free of credentials.
+
+## Start with one process
+
+A single process with a bounded work queue is easier to reason about than multiple services sharing mutable files. Add separate workers only when measurements justify them, and define a cross-process locking strategy before doing so.
+
+The admin listener can remain separate logically even within that process. It needs its own authentication and exposure policy.

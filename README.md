@@ -34,10 +34,8 @@ For a manual project-path build, set `NEXT_PUBLIC_BASE_PATH=/YOUR_REPOSITORY_NAM
 
 ## Contents
 
-- [Introduction](content/docs/index.mdx)
-- [Architecture and implementation](content/docs/build.mdx)
-- [Automatic publishing](content/docs/sync.mdx)
-- [Deployment and administration](content/docs/deploy.mdx)
-- [Testing and troubleshooting](content/docs/testing.mdx)
+The 18-chapter handbook includes quickstart, architecture, catalog contracts, integrity and atomic caching, publishing, automatic synchronization, configuration, asset APIs, VPS deployment, administration, observability, testing, recovery, troubleshooting, and contribution guides.
+
+Read the [published handbook](https://carter-game-s.github.io/carter-games-preloader-guide/) or browse `content/docs`.
 
 Original documentation and educational examples are [MIT licensed](LICENSE). Fumadocs and its dependencies retain their own licenses. Use games you own or have permission to host.

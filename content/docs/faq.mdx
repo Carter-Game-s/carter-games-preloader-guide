@@ -1,0 +1,48 @@
+---
+title: Troubleshooting and FAQ
+description: Diagnose blank pages, stale games, search failures, and forwarding problems.
+---
+
+## Is the production preloader open source?
+
+No. Carter's production preloader remains private. This public repository provides documentation and original educational examples for building your own service.
+
+## Why does the game show a white page?
+
+Check the browser network panel first. Confirm the HTML route returns HTML, referenced scripts and styles return their own MIME types, and relative URLs resolve under the intended base path. Inspect the first console error rather than assuming the cache is responsible.
+
+For WebAssembly games, verify the loader, framework, data, and code files individually. An HTML 200 response does not prove the package is complete.
+
+## Why does the admin page download?
+
+Check `Content-Type` and `Content-Disposition`. Ensure you opened the admin listener rather than a raw asset endpoint or a status listener that does not implement that route. Unknown routes should return a readable explicit error, not an unlabeled binary response.
+
+## Why are newly published games missing?
+
+Compare the configured repository and branch with the publication commit. Confirm assets and catalog were committed together, source authentication still works, discovery is not paused, and the candidate catalog was accepted. Then inspect pending downloads and integrity errors.
+
+After an organization transfer, update repository configuration and deploy-key access. GitHub redirects help existing URLs, but explicit new identities are easier to audit.
+
+## Why does a Codespaces link return 404?
+
+Verify the Codespace is running, the local listener exists, any SSH tunnel is connected, and the port is registered with the intended visibility. Test the loopback listener from inside the Codespace, then test the actual forwarded HTTPS URL.
+
+Private forwarded ports require the appropriate GitHub session. Do not make an admin port public to bypass a forwarding problem.
+
+## Why does local login work but HTTPS login fail?
+
+Compare configured origin with the browser's exact HTTPS origin. Check trusted proxy handling, cookie Path and Secure settings, and CSRF requests. Do not solve this by accepting every Origin or forwarded host.
+
+## Why does documentation search fail?
+
+This handbook exports a static search index. The deployed base path must match the project URL, and the search request must load that index successfully. A site served under a repository path cannot use domain-root asset URLs accidentally.
+
+Rebuild after changing `NEXT_PUBLIC_BASE_PATH`; it is embedded into browser assets during the build.
+
+## Can every website or game work?
+
+No single cache or player guarantees universal compatibility. Authentication, third-party dependencies, browser APIs, iframe restrictions, and source availability can affect individual games. Test actual packages and report limitations honestly.
+
+## Where should I start debugging?
+
+Trace one request through browser, portal route, asset authentication, version lookup, cache verification, and response headers. Stop at the first failed boundary. Record a sanitized error and operation ID so subsequent checks examine the same request.

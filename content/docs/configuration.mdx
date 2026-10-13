@@ -1,0 +1,52 @@
+---
+title: Configuration reference
+description: Design explicit settings and keep deployment secrets outside source control.
+---
+
+## Settings for your implementation
+
+The names below are illustrative configuration choices. Your new service must implement and validate them; the public guide does not provide a parser or runnable server.
+
+| Setting | Purpose | Validation |
+| --- | --- | --- |
+| `DATA_DIR` | Persistent cache and state | Writable by service account |
+| `BIND_HOST` | Asset listener address | Explicit private/loopback address |
+| `PORT` | Asset listener port | Integer in valid port range |
+| `ASSET_TOKEN` | Portal-to-cache credential | Required, random, never public |
+| `SYNC_REPOSITORY` | Trusted source repository | Explicit owner/name allowlist |
+| `SYNC_BRANCH` | Discovery branch | Valid configured ref |
+| `SYNC_INTERVAL_SECONDS` | Poll interval | Bounded positive integer |
+| `DOWNLOAD_CONCURRENCY` | Worker limit | Small bounded integer |
+| `MAX_ASSET_BYTES` | Streaming size ceiling | Positive finite limit |
+| `ADMIN_ORIGIN` | Trusted admin HTTPS origin | Exact scheme and host |
+
+## Example environment file
+
+```dotenv
+DATA_DIR=/var/lib/my-game-preloader
+BIND_HOST=127.0.0.1
+PORT=8080
+ASSET_TOKEN=REPLACE_WITH_A_RANDOM_SECRET
+SYNC_REPOSITORY=YOUR_OWNER/YOUR_SOURCE_REPOSITORY
+SYNC_BRANCH=main
+SYNC_INTERVAL_SECONDS=60
+DOWNLOAD_CONCURRENCY=2
+MAX_ASSET_BYTES=16777216
+ADMIN_ORIGIN=https://YOUR_PRIVATE_ADMIN_HOST
+```
+
+This conservative example is for a small test fixture. A 16 MiB ceiling will reject many larger games; increase it only after measuring capacity and choosing explicit limits.
+
+## Fail fast
+
+Validate configuration before binding listeners or starting downloads. Reject empty credentials, invalid origins, conflicting ports, unsupported schemes, and impossible numeric values. Print the setting's name when invalid, not its secret value.
+
+Load environment files through a parser or supervisor. Do not execute an environment file as a shell program unless it is deliberately trusted shell code.
+
+## Public site variables
+
+The documentation uses `NEXT_PUBLIC_BASE_PATH` for project-path hosting and `NEXT_PUBLIC_GITHUB_REPOSITORY` for source links. These are public metadata and are embedded into browser assets. Never place service tokens or administrator credentials in variables prefixed `NEXT_PUBLIC_`.
+
+## Credential rotation
+
+Generate a replacement credential, update the consuming portal and service in a planned order, confirm authenticated delivery, then revoke the previous credential. If you support overlap, bound its duration and record the rotation event without recording the values.

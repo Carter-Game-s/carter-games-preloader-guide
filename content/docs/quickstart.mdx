@@ -1,0 +1,46 @@
+---
+title: Start your own preloader
+description: A practical first milestone using one original HTML game.
+---
+
+## What this guide provides
+
+This repository is a documentation site and a small integrity example. It does not contain Carter's private production preloader. The service designs and configuration snippets describe an implementation you can build; copying this guide alone will not start an asset server.
+
+Start with one HTML file you own. Avoid importing hundreds of games until the download, verification, delivery, and restart flows work together.
+
+## Prepare the fixture
+
+Clone the public guide and compare its example hash with Git:
+
+```bash
+git clone https://github.com/Carter-Game-s/carter-games-preloader-guide.git
+cd carter-games-preloader-guide
+node examples/hash-file.mjs examples/demo.html
+git hash-object --no-filters examples/demo.html
+```
+
+Both commands must print the same value. The helper is for SHA-1 Git repositories; do not substitute a plain SHA-1 file checksum.
+
+## Build the smallest useful service
+
+Create a separate TypeScript project. Implement catalog validation, one download worker, verified disk storage, and an authenticated read endpoint. Keep the source repository, revision, and file path fixed in server configuration while testing.
+
+Your first accepted catalog should contain one stable slug, the source commit, its permitted path, byte length, and Git blob ID. Reject the complete update if any field fails validation.
+
+## Prove the first milestone
+
+Fetch the fixture, verify its original bytes, write it atomically, and request it through the authenticated API. Stop and restart the service, then request the same pinned version again. A restart should read the existing cache instead of downloading it again.
+
+Next, change the fixture, publish a new revision, and run reconciliation. Confirm both the previous and new versions remain available. Only then add scheduled synchronization, a portal player, administration, and more sources.
+
+## Run this documentation locally
+
+```bash
+bun install --frozen-lockfile
+bun run dev
+```
+
+Open `http://localhost:3000`. To verify the documentation itself, run `bun run typecheck` and `bun run build`. These commands build the handbook, not your new preloader service.
+
+Continue with [system architecture](/docs/architecture) and [catalog design](/docs/catalog).

@@ -1,0 +1,48 @@
+---
+title: Contributing and documentation hosting
+description: Improve the handbook, validate changes, and deploy the static site.
+---
+
+## Scope
+
+Contribute clearer explanations, original examples, corrected links, and reproducible tests. Do not publish Carter's private implementation, deployment credentials, private keys, or game files without distribution permission.
+
+Carter created and maintains the project; AI assistance helped prepare code and documentation. Describe substantive contributions accurately in pull requests.
+
+## Add a chapter
+
+Create an MDX file under `content/docs` with a title and description in YAML frontmatter. Add its slug to `content/docs/meta.json`. Use plain Markdown links for internal chapters and fence illustrative code with the appropriate language.
+
+Clearly label proposed contracts and templates. Readers should be able to distinguish working examples in this repository from an implementation they must create themselves.
+
+## Validate a change
+
+```bash
+bun install --frozen-lockfile
+bun run typecheck
+bun run build
+node examples/hash-file.mjs examples/demo.html
+git hash-object --no-filters examples/demo.html
+```
+
+Compare the final two values. Open changed chapters, follow links, test search, and check a narrow mobile viewport. Do not commit `node_modules`, `.next`, `out`, environment files, or build caches.
+
+## Deploy on GitHub Pages
+
+Configure Pages to use GitHub Actions. The included workflow derives the repository owner and project base path, exports the site, uploads the artifact, and deploys it. Pull requests build the site but do not deploy it.
+
+For manual project-path builds:
+
+```bash
+NEXT_PUBLIC_BASE_PATH=/carter-games-preloader-guide NEXT_PUBLIC_GITHUB_REPOSITORY=Carter-Game-s/carter-games-preloader-guide bun run build
+```
+
+Serve `out/` under that same project path. When hosting at a custom domain root, build with an empty base path instead.
+
+## After a repository transfer
+
+Update Git remotes, source links, Pages identity, and external deployment configuration. Re-run the workflow under the new owner and verify the resulting public URL. Check repository visibility independently: transferring a repository is not a request to change its privacy.
+
+## Review standard
+
+Prefer precise behavior over claims that everything works. Include what changed, how it was verified, and any compatibility limit the reader needs. Original documentation and examples are MIT licensed; dependencies retain their own licenses.

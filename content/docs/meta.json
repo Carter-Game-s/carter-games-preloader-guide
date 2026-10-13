@@ -1,10 +1,23 @@
 {
-  "title": "Build a preloader",
+  "title": "Carter Game\u2019s handbook",
   "pages": [
     "index",
+    "quickstart",
+    "architecture",
     "build",
+    "catalog",
+    "integrity",
+    "publishing",
     "sync",
+    "configuration",
+    "api",
     "deploy",
-    "testing"
+    "vps",
+    "admin",
+    "observability",
+    "testing",
+    "recovery",
+    "faq",
+    "contributing"
   ]
 }

@@ -1,0 +1,74 @@
+---
+title: VPS deployment recipe
+description: A systemd template with separate application files, data, and credentials.
+---
+
+## Prepare your own server
+
+Use a supported Linux distribution, an unprivileged SSH account, a compatible Node.js runtime, and a build environment matching CI. Build the service you implemented in a separate repository; this documentation site has no preloader executable.
+
+Suggested directories:
+
+```text
+/opt/my-game-preloader/           compiled application, read-only to service
+/var/lib/my-game-preloader/       persistent writable cache
+/etc/my-game-preloader.env        protected configuration
+```
+
+Create a dedicated system account and grant it only the directories it needs. Do not run downloaded game code as part of deployment.
+
+## Example systemd unit
+
+Adapt this template to your executable and supported options:
+
+```ini
+[Unit]
+Description=Verified game preloader
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=game-preloader
+Group=game-preloader
+WorkingDirectory=/opt/my-game-preloader
+EnvironmentFile=/etc/my-game-preloader.env
+ExecStart=/usr/bin/node /opt/my-game-preloader/dist/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/my-game-preloader
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
+```
+
+The referenced account, files, runtime path, and compiled entry point must exist. This template does not install them. Confirm hardening options permit your actual runtime and source access before enabling it.
+
+## Validate and enable
+
+```bash
+sudo systemd-analyze verify /etc/systemd/system/my-game-preloader.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now my-game-preloader
+sudo systemctl status my-game-preloader --no-pager
+```
+
+Review logs locally with `journalctl -u my-game-preloader`. Sanitize them before sharing.
+
+## Deploy without replacing data
+
+Install dependencies with the frozen lockfile, run typechecking and tests, and build a new application release. Copy application files into a new release directory, then switch the application path in a controlled way. Keep the data directory separate from those releases.
+
+Wait for readiness after restarting. A supervisor reporting `active` proves a process exists; it does not prove the catalog is loaded or assets can be delivered.
+
+## Networking
+
+Keep asset and admin listeners on loopback when possible. Use an authenticated portal connection, a private network, or an SSH tunnel. Expose the read-only status page only after deciding which statistics are safe to disclose. If publicly exposed, terminate HTTPS and verify that no admin operations share that listener.
+
+Never publish a private SSH key in this guide, a repository, or a downloadable diagnostic archive.

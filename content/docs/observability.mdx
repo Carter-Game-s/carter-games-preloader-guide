@@ -1,0 +1,43 @@
+---
+title: Metrics and capacity planning
+description: Measure readiness, delivery health, queue pressure, and disk usage.
+---
+
+## Useful measurements
+
+| Measurement | What it tells you |
+| --- | --- |
+| Ready versus desired versions | Whether the library is available |
+| Oldest pending item age | Whether the queue is making progress |
+| Last successful sync age | Whether discovery is stale |
+| Download failures by class | Network, integrity, or disk problems |
+| Cache hits and upstream bytes | Whether caching avoids repeated work |
+| Active transfers and queue depth | Concurrency pressure |
+| Stored bytes and free disk | Capacity and write headroom |
+| Delivery latency and errors | Portal-facing availability |
+
+Use bounded labels such as error classes. Avoid game IDs, full URLs, or request tokens as unbounded metric labels.
+
+## Budget disk space
+
+Account for retained versions, compressed cache files, temporary downloads, state snapshots, and logs. Leave room for installing at least the largest permitted asset while older content remains available.
+
+Advertised size is not sufficient: enforce actual streamed and decompressed limits. Refuse new work before the filesystem is exhausted and keep serving verified content.
+
+## Tune concurrency
+
+Start with one or two workers. Measure memory and disk throughput on the actual VPS. More concurrency can reduce total download time but increase memory pressure, file descriptors, upstream failures, and CPU work during hashing/compression.
+
+Prefer a streaming pipeline where possible. If reconstruction requires buffering a large asset, include that allocation in the memory budget.
+
+## Define service health
+
+Liveness means the process can respond. Readiness means required state and listeners are usable. Synchronization health means discovery is recent enough. These are different questions; do not collapse them into one green badge.
+
+A source outage can make discovery stale while cached gameplay remains healthy.
+
+## Alerts and logging
+
+Alert on persistent failure or age thresholds rather than every retry. Record operation IDs, sanitized status, duration, and byte counts. Keep secrets and raw authorization headers out of logs.
+
+Compare changes over time before increasing resources. An unexpectedly falling hit rate may be a versioning or portal-request bug rather than insufficient hardware.

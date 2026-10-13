@@ -1,0 +1,42 @@
+---
+title: Admin control room
+description: Design secure sessions, useful controls, and truthful progress reporting.
+---
+
+## Protect every state-changing action
+
+Require an authenticated session, a CSRF token, and an allowed request origin for manual sync, retry, repair, pause, and resume. Validate input on the server even when the UI sends only predefined values.
+
+Hash passwords with a salted password-hashing algorithm and cap concurrent verification work. Rate-limit failed attempts. Use random session IDs, finite expiry, HttpOnly cookies, SameSite policy, and Secure cookies over HTTPS.
+
+The read-only public status page and the private control room should have separate routes and exposure policies.
+
+## Show distinct measurements
+
+Display ready games, pending games, verified files, failures, active transfers, bytes stored, and process uptime. During a full verification pass, show checked items separately from ready items. A cached game can be ready before the current pass reaches it.
+
+Include synchronization source revision, last successful check, configured interval, paused state, and next check if known. A timestamp of the last attempt must not masquerade as the last success.
+
+## Controls and operation ownership
+
+Use one operation lock where actions share mutable state. Disable conflicting buttons while work is running and explain which operation owns the lock. Release it in `finally` and display success or sanitized failure.
+
+A per-game repair should target a validated known slug, not an arbitrary path. Retrying failures should avoid re-downloading valid ready versions.
+
+Pause discovery without interrupting delivery. If startup verification is still running, retain a pause request when that startup operation finishes.
+
+## Library tools
+
+Provide search by title and slug, source/status filters, deterministic sorting, and pagination. Reset pagination when filters change so users do not land on an empty later page.
+
+Use text rendering for titles and errors rather than injecting HTML. Give buttons accessible names and expose progress in text as well as color.
+
+## Safe diagnostics
+
+Export counters, accepted revision, operation timestamps, and sanitized errors. Exclude cookies, session IDs, CSRF values, credentials, environment contents, private keys, and filesystem paths that disclose deployment details.
+
+Keep a bounded activity log. Define which events survive restarts and make that behavior clear to operators.
+
+## Acceptance tests
+
+Verify login failure, successful login, CSRF rejection, origin rejection, session expiry, logout, and concurrent operation rejection. Test the actual HTTPS forwarding URL as well as a loopback request: proxy origin handling and cookie behavior can differ.

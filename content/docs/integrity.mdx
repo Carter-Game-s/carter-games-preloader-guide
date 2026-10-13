@@ -1,0 +1,46 @@
+---
+title: Integrity and atomic caching
+description: Verify the exact bytes and install only complete, trusted versions.
+---
+
+## Git object IDs are not plain file checksums
+
+For a SHA-1 Git repository, hash a header followed by the original bytes:
+
+```text
+SHA1("blob " + decimal_byte_length + NUL + original_bytes)
+```
+
+The included `examples/hash-file.mjs` demonstrates this format. Compare it with `git hash-object --no-filters`. Repository filters, line-ending conversions, or decoding and re-encoding HTML can change the bytes.
+
+A content hash proves consistency with the catalog. It does not prove the game is safe or that the publisher owns it. Trust in the catalog source and isolation of executed content are separate controls.
+
+## Verify before compression
+
+Check the uncompressed source length and content hash first. Compression creates a transport/storage representation, not a new game version. Store enough metadata to know the expected original length and hash when verifying a compressed cache later.
+
+When reading compressed files, bound decompressed output as well as compressed input. A small compressed file can expand into a much larger allocation.
+
+## Temporary files and installation
+
+Write a temporary file in the destination directory or another directory on the same filesystem. Finish verification and close the file before renaming it into the versioned path. For crash durability requirements, synchronize the file and containing directory according to the target filesystem's behavior.
+
+A failed write should delete its temporary file and leave the previous version untouched. Do not mark readiness before installation succeeds.
+
+## Concurrent requests
+
+Index in-flight work by source identity and immutable content ID. Requests for the same version should wait on the same operation. Release the entry in a `finally` block whether the operation succeeds or fails.
+
+A process-local map is sufficient only for one process. Multiple writers need an explicit shared lock or ownership scheme.
+
+## Split files
+
+If a source splits a large asset into parts, require an ordered part list, individual limits, and a pinned expected result. Reject missing, repeated, reordered, or unexpectedly large parts. Verify the reconstructed original bytes before publishing the result.
+
+Do not assume concatenation is correct merely because every part downloaded successfully.
+
+## Corruption and repair
+
+A repair should remove the version from the ready index while checking it. If existing bytes fail verification, refetch from the pinned source and verify again. If repair fails, expose a failed state instead of claiming the game is ready.
+
+Preserve the failure reason in sanitized diagnostics, and keep unrelated games available.

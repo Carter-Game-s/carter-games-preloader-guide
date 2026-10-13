@@ -1,0 +1,43 @@
+---
+title: Publishing walkthrough
+description: Publish a new version and observe automatic discovery without a restart.
+---
+
+## Prepare a playable package
+
+Choose a stable slug and confirm you have permission to distribute the game. Include every required script, stylesheet, image, font, media file, and WebAssembly artifact. A game that works with your local filesystem may still depend on an undocumented remote origin.
+
+Test it in a clean browser profile with developer tools open. Record failed requests and verify keyboard, touch, audio activation, save data, and restart behavior.
+
+## Publish assets and catalog together
+
+1. Place the package under a permitted source directory.
+2. Compute hashes and original byte lengths for the exact committed bytes.
+3. Add or update the catalog entry and portal metadata.
+4. Validate the entire candidate catalog.
+5. Commit the assets and metadata together.
+6. Push the branch watched by discovery.
+
+Avoid pointing a catalog at files that exist only on your machine. Avoid publishing metadata first and uploading assets later.
+
+## Observe discovery
+
+The next scheduled check should resolve the new source commit, accept its valid catalog, and queue new content IDs. Existing ready versions should remain available throughout the operation.
+
+Track the source revision, last successful check, pending item count, and the selected game's state. A manual sync can speed up testing, but should call the same function as scheduled reconciliation.
+
+## Define the handoff to the portal
+
+Your portal may either display newly accepted games while marking them as preparing, or display only ready games. Document the choice. Do not show a working Play button for an unavailable version without a useful loading or retry state.
+
+Ensure the portal requests the same pinned version represented by its deployed catalog. Reconciliation of a newer revision must not silently replace that request with different bytes.
+
+## Prove that restarts are unnecessary
+
+Publish a second tiny version while the service stays running. Confirm the revision changes, the new content becomes ready, and an already cached old version remains readable. Compare process uptime before and after to confirm there was no restart.
+
+Then temporarily make the source unavailable. Cached versions should continue playing; discovery should record the failure and retry later.
+
+## Roll back
+
+Revert the publication with a new source commit or restore a previously accepted catalog through your normal publishing process. Keep the rollback revision auditable. Do not mutate old immutable content IDs to force a rollback.
