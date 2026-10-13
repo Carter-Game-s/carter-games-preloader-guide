@@ -53,7 +53,7 @@ For each entry:
 7. Atomically rename it into the versioned cache.
 8. Update progress only after successful verification.
 
-For a SHA-1 Git repository, a blob ID hashes `blob <byte-length>`, a NUL byte, and the original file bytes. Hash before compression. The [example helper](https://github.com/carteraccs/carter-games-preloader-guide/blob/main/examples/hash-file.mjs) implements that operation and is checked against Git in CI.
+For a SHA-1 Git repository, a blob ID hashes `blob <byte-length>`, a NUL byte, and the original file bytes. Hash before compression. The [example helper](https://github.com/Carter-Game-s/carter-games-preloader-guide/blob/main/examples/hash-file.mjs) implements that operation and is checked against Git in CI.
 
 Use a bounded queue and a map of in-flight versions so concurrent requests do not download the same file twice. Apply finite retries with increasing delays. A corrupt file must never replace a previously verified version.
 
