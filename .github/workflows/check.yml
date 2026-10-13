@@ -1,0 +1,17 @@
+name: Check examples
+on: [push, pull_request]
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check examples/hash-file.mjs
+      - name: Compare the example hash with Git
+        shell: bash
+        run: |
+          example_hash=$(node examples/hash-file.mjs examples/demo.html)
+          git_hash=$(git hash-object --no-filters examples/demo.html)
+          test "$example_hash" = "$git_hash"

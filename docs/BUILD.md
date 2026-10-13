@@ -1,0 +1,87 @@
+# Architecture and implementation
+
+## 1. Create the TypeScript project
+
+Create a project with separate catalog, download, cache, API, synchronization, and admin modules. Compile TypeScript into a `dist/` directory and run the compiled service with Node.js. Keep generated caches, environment files, credentials, logs, and dependencies outside source control.
+
+Suggested structure:
+
+```text
+src/catalog.ts
+src/cache.ts
+src/download.ts
+src/sync.ts
+src/server.ts
+src/admin.ts
+tests/
+data/
+```
+
+Use a frozen dependency lockfile in CI. Configuration should provide a writable data directory, explicit listen addresses, bounded download size/concurrency, source repository and branch, polling interval, and separate credentials for assets and administration.
+
+## 2. Define a trusted catalog
+
+Each entry needs a stable slug, display title, immutable source revision, expected content hash, and a permitted source path. Resolve sources from one configured repository or approved origin rather than accepting arbitrary URLs from HTTP requests.
+
+Example schema shape:
+
+```text
+revision: immutable commit ID
+entries:
+  slug: stable identifier
+  title: display name
+  path: permitted game file path
+  blob: expected Git object ID
+  size: expected uncompressed byte length
+```
+
+Validate the complete catalog before downloading any update. Reject traversal, absolute paths, duplicate slugs, malformed hashes, oversized entries, and unknown source fields. If using split files, validate every part and the reconstructed file.
+
+## 3. Implement verified downloads
+
+For each entry:
+
+1. Check whether its pinned version is already cached and valid.
+2. Join only a validated relative path to the configured immutable source.
+3. Enforce a request timeout and a streaming byte limit; do not trust Content-Length alone.
+4. Reject redirects, or validate every redirected target before following it.
+5. Verify the downloaded bytes against the catalog's expected size and hash.
+6. Write compressed bytes to a temporary file inside the destination filesystem.
+7. Atomically rename it into the versioned cache.
+8. Update progress only after successful verification.
+
+For a SHA-1 Git repository, a blob ID hashes `blob <byte-length>`, a NUL byte, and the original file bytes. Hash before compression. The [example helper](../examples/hash-file.mjs) implements that operation and is checked against Git in CI.
+
+Use a bounded queue and a map of in-flight versions so concurrent requests do not download the same file twice. Apply finite retries with increasing delays. A corrupt file must never replace a previously verified version.
+
+## 4. Design the cache layout
+
+Use a layout based on validated slugs and immutable content IDs:
+
+```text
+data/catalog.json
+data/progress.json
+data/cache/<validated-slug>/<content-id>.gz
+```
+
+Serialize changes to the catalog and progress state, and write them atomically. Retain older versions until deployed clients no longer need them. Any cleanup policy should protect active versions and files currently being served.
+
+## 5. Build the asset API
+
+Authenticate asset requests before reading files. Accept a known slug and optionally a known version; never expose arbitrary filesystem paths or upstream URLs.
+
+Suggested responses:
+
+| Request | Response |
+| --- | --- |
+| Known cached version | Verified bytes, correct MIME/encoding headers |
+| Known version still caching | 503 with a retry indication |
+| Unknown slug/version | 404 |
+| Missing or invalid credentials | 401 |
+| Unsupported method | 405 |
+
+If you send compressed bytes, use matching Content-Encoding. For in-browser HTML gameplay, the portal should embed verified content in its isolated player; avoid accidental attachment headers on pages intended to render as HTML.
+
+## 6. Connect the portal
+
+The portal's server authenticates to the cache service. Keep service credentials out of client-side JavaScript. Verify the returned content before handing it to the player. The player should isolate third-party game scripts and expose only narrowly scoped storage or control bridges when necessary.
