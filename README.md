@@ -1,61 +1,43 @@
-# Build a Game Preloader
+# Carter Game’s · Preloader Guide
 
-A practical guide by **Carter (carteraccs)** to building a TypeScript game cache for a VPS. AI assistance helped prepare the documentation. Carter's production preloader remains private; this repository contains a standalone guide and small educational examples.
+A public **Fumadocs** site by **Carter (carteraccs)** explaining how to build a verified game preloader. AI assistance helped prepare the documentation. Carter's production preloader remains private.
 
-A preloader downloads published game files ahead of time, verifies them, caches them on disk, and delivers them to a browser game portal. Players still play in their browser. The service does not execute the downloaded games.
+The guide covers catalog validation, immutable game hashes, atomic caching, automatic publishing, secure asset delivery and administration, VPS deployment, testing, and recovery.
 
-## Start here
+## Run locally
 
-1. Read [Architecture and implementation](docs/BUILD.md) to design your service.
-2. Follow [Automatic publishing](docs/SYNC.md) to discover new games without editing a VPS manifest or restarting.
-3. Use [Deployment and administration](docs/DEPLOY.md) to protect asset delivery and admin access.
-4. Work through [Testing and troubleshooting](docs/TESTING.md) before connecting a real game library.
-
-Use Node.js 22 or later, TypeScript, Git, and a Linux VPS. Bun is an optional development tool. Disk requirements depend on your library: budget for compressed games, temporary downloads, retained versions, and operating-system headroom.
-
-```mermaid
-flowchart LR
-  A[Game publication] --> B[Pinned catalog revision]
-  B --> C[Validate entries]
-  C --> D[Download and verify]
-  D --> E[Atomic disk cache]
-  E --> F[Authenticated asset API]
-  F --> G[Game portal]
-  G --> H[Isolated browser player]
-```
-
-## Try the integrity example
-
-This repository is documentation, not a complete preloader service. The included example demonstrates how to calculate a SHA-1 Git blob ID for a file:
+Install Bun and Node.js 22 or later:
 
 ```bash
-git clone https://github.com/carteraccs/carter-games-preloader-guide.git
-cd carter-games-preloader-guide
+bun install --frozen-lockfile
+bun run dev
+```
+
+Open `http://localhost:3000`. MDX chapters live in `content/docs`; the sidebar order is in `content/docs/meta.json`.
+
+## Validate and build
+
+```bash
+bun run typecheck
+bun run build
 node examples/hash-file.mjs examples/demo.html
 git hash-object --no-filters examples/demo.html
 ```
 
-Both commands should print the same value. For a SHA-256 Git repository, match that repository's object format instead of assuming SHA-1. Obtain expected hashes from a trusted, pinned catalog; a hash supplied by an untrusted download does not establish trust.
+The integrity example and Git should print the same hash. `bun run build` exports the site to `out/`. Production search runs locally in the browser using the exported index; no search-provider credentials or server are required.
 
-## What to implement
+## GitHub Pages
 
-| Component | Responsibility |
-| --- | --- |
-| Catalog | Validate slugs, source paths, revisions, hashes, and size limits |
-| Cache worker | Deduplicate downloads, bound concurrency, verify bytes, atomically save |
-| Synchronizer | Poll a trusted source, reconcile revisions, retry failed updates |
-| Asset API | Authenticate requests and serve only verified known versions |
-| Status page | Show progress and resource metrics without credentials |
-| Admin page | Protect operations with password hashing, expiring sessions, and CSRF checks |
-| Browser player | Isolate third-party games from the portal's storage and credentials |
+The included workflow builds and deploys the static site when Pages is configured to use GitHub Actions. It derives the repository identity and base path from GitHub, so it also supports an organization-owned project repository.
 
-Use games you own or have permission to host. Keep creator credits and game licenses separate from your service's license.
+For a manual project-path build, set `NEXT_PUBLIC_BASE_PATH=/YOUR_REPOSITORY_NAME`. Set `NEXT_PUBLIC_GITHUB_REPOSITORY=YOUR_OWNER/YOUR_REPOSITORY` for source links. Keep `NEXT_PUBLIC_BASE_PATH` empty when hosting at a domain root. These variables contain public site metadata, never credentials.
 
-## References
+## Contents
 
-- [Git object hashing](https://git-scm.com/docs/git-hash-object)
-- [Node.js cryptography](https://nodejs.org/api/crypto.html)
-- [Bun installation](https://bun.sh/docs/installation)
-- [systemd service configuration](https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html)
+- [Introduction](content/docs/index.mdx)
+- [Architecture and implementation](content/docs/build.mdx)
+- [Automatic publishing](content/docs/sync.mdx)
+- [Deployment and administration](content/docs/deploy.mdx)
+- [Testing and troubleshooting](content/docs/testing.mdx)
 
-The guide and its original examples are [MIT licensed](LICENSE).
+Original documentation and educational examples are [MIT licensed](LICENSE). Fumadocs and its dependencies retain their own licenses. Use games you own or have permission to host.

@@ -1,0 +1,50 @@
+---
+title: Build a game preloader
+description: A practical guide by Carter to fast, verified game delivery on a VPS.
+---
+
+A preloader caches game files ahead of time so your portal can serve them without repeating slow upstream downloads. Players still play in their browser; your VPS stores and delivers verified assets without executing game scripts.
+
+This public guide explains how to build your own service. Carter's production implementation remains private. The guide and original educational examples are MIT licensed.
+
+## Choose your path
+
+| Chapter | What you will build |
+| --- | --- |
+| [Architecture](/docs/build) | A validated catalog, atomic disk cache, and authenticated asset API |
+| [Automatic publishing](/docs/sync) | A reconciliation loop that discovers new games without restarting |
+| [Deployment](/docs/deploy) | An isolated service, password-protected admin controls, and recovery plan |
+| [Testing](/docs/testing) | Integrity, authentication, synchronization, and browser acceptance checks |
+
+## Requirements
+
+Use Node.js 22 or later, TypeScript, Git, and a Linux VPS. Bun is optional for the service you build. Budget disk space for compressed games, temporary downloads, retained versions, and operating-system headroom.
+
+Start with a small game that you own or have permission to host. Keep game licenses and creator credits separate from your service's license.
+
+## The delivery pipeline
+
+1. Publish game assets and a catalog in the same immutable revision.
+2. Validate the complete catalog before accepting an update.
+3. Download only missing versions from a configured trusted source.
+4. Verify original bytes against the catalog's expected hash and size.
+5. Write the verified cache atomically.
+6. Serve known versions through an authenticated API.
+7. Play the game inside the portal's isolated browser player.
+
+## Try the integrity example
+
+Clone the guide repository, then run these commands from its root:
+
+```bash
+node examples/hash-file.mjs examples/demo.html
+git hash-object --no-filters examples/demo.html
+```
+
+Both commands produce the same SHA-1 Git blob ID for the included original fixture. For a SHA-256 Git repository, use that repository's object format. An expected hash must come from a trusted catalog; a hash supplied with an untrusted download does not establish trust.
+
+## What this guide covers
+
+Verified downloads, bounded concurrency and retries, persistent catalog state, automatic discovery, safe version retention, private asset delivery, secure admin authentication, useful statistics, and practical testing.
+
+Created and maintained by **Carter (carteraccs)**. AI assistance helped prepare the documentation; imported games remain the work of their original creators.

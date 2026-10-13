@@ -1,0 +1,10 @@
+{
+  "title": "Build a preloader",
+  "pages": [
+    "index",
+    "build",
+    "sync",
+    "deploy",
+    "testing"
+  ]
+}

@@ -1,7 +1,11 @@
 node_modules/
+.next/
+out/
+.source/
 dist/
 data/
 .env*
 *.log
 *.key
 *.pem
+*.tsbuildinfo
